@@ -1,0 +1,15 @@
+#root {
+    width: 100vw;
+    height: 100vh;
+    margin: 0px;
+    padding: 0px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#calculator {
+    border: 1px solid black;
+    width: 30vh;
+    height: 60vh;
+}

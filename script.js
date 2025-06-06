@@ -21,6 +21,13 @@ class Calculator extends React.Component {
             this.setState((prevState) => {
                 const inputValueIsOperator = ["+", "-", "*", "/"].includes(prevState.input);
 
+                if(prevState.equation.includes("=")){
+                    return {
+                        equation: [value],
+                        input: value
+                    };
+                }
+
                 if (prevState.input === "0" && value === "0") {
                     return null;
                 }
@@ -43,7 +50,7 @@ class Calculator extends React.Component {
                         input: updatedValue
                     };
                 }
-
+                
                 if (inputValueIsOperator || prevState.input === "0") {
                     const updatedEquation = [...prevState.equation, value];
                     console.log("Equation:", updatedEquation);
@@ -74,12 +81,21 @@ class Calculator extends React.Component {
             });
         }
         else if (type === "operator") {
+            //TODO if equation already contains "=" replace equation with prevState.input(i.e result of previous equation) 
+            //with the operator
             this.setState((prevState) => {
                 const lastValue = prevState.equation[prevState.equation.length - 1];
                 const secondLastValue = prevState.equation[prevState.equation.length - 2];
                 const isLastValueIsOperator = ["+", "-", "*", "/"].includes(lastValue);
                 const isSecondLastValueIsOperator = ["+", "-", "*", "/"].includes(secondLastValue);
-
+                //change made start
+                if(prevState.equation.includes("=")){
+                    return {
+                        equation: [prevState.input, value],
+                        input: value
+                    }
+                }
+                //change made end
                 if (value === "-" && isLastValueIsOperator && !isSecondLastValueIsOperator) {
                     const updatedEquation = [...prevState.equation, value];
                     console.log("Equation:", updatedEquation);
@@ -118,43 +134,51 @@ class Calculator extends React.Component {
             });
         }
         else if (type === "equals") {
+            //TODO if equation already contains "=" return null ----------------
             console.log("Equals Pressed");
             this.setState((prevState) => {
                 let tempEquation = [...prevState.equation];
-
+                if(prevState.equation.includes("=")){
+                    return null;
+                }
+                //check 1: evaluate negative numbers 
                 for (let i = 0; i < tempEquation.length; i++) {
                     const value = tempEquation[i];
-                    if (value === "*") {
-                        const result = this.handleMutliplyEquation(tempEquation[i - 1], tempEquation[i + 1]).toString();
-                        tempEquation.splice(i - 1, 3, result);
-                        i = -1; 
+                    const nextValue = tempEquation[i + 1];
+                    const nextNext = tempEquation[i + 2];
+
+                    if (
+                        ["+", "-", "*", "/"].includes(value) &&
+                        nextValue === "-" &&
+                        typeof nextNext !== "undefined" &&
+                        !isNaN(nextNext)
+                    ) {
+                        tempEquation.splice(i + 1, 2, "-" + nextNext);
+                        i++;
                     }
                 }
 
+                //check 2: determine if there is an multiplication and division in equation
                 for (let i = 0; i < tempEquation.length; i++) {
                     const value = tempEquation[i];
-                    if (value === "/") {
-                        const result = this.handleDivideEquation(tempEquation[i - 1], tempEquation[i + 1]).toString();
+                    if (value === "*" || value === "/") {
+                        const result = value === "*"
+                            ? this.handleMutliplyEquation(tempEquation[i - 1], tempEquation[i + 1]).toString()
+                            : this.handleDivideEquation(tempEquation[i - 1], tempEquation[i + 1]).toString();
                         tempEquation.splice(i - 1, 3, result);
-                        i = -1;
+                        i = 0;
                     }
                 }
 
+                //check 3: determine if there is an addition and subtraction in equation
                 for (let i = 0; i < tempEquation.length; i++) {
                     const value = tempEquation[i];
-                    if (value === "+") {
-                        const result = this.handleAddEquation(tempEquation[i - 1], tempEquation[i + 1]).toString();
+                    if (value === "+" || value === "-") {
+                        const result = value === "+"
+                            ? this.handleAddEquation(tempEquation[i - 1], tempEquation[i + 1]).toString()
+                            : this.handleSubtractEquation(tempEquation[i - 1], tempEquation[i + 1]).toString();
                         tempEquation.splice(i - 1, 3, result);
-                        i = -1;
-                    }
-                }
-
-                for (let i = 0; i < tempEquation.length; i++) {
-                    const value = tempEquation[i];
-                    if (value === "-") {
-                        const result = this.handleSubtractEquation(tempEquation[i - 1], tempEquation[i + 1]).toString();
-                        tempEquation.splice(i - 1, 3, result);
-                        i = -1;
+                        i = 0;
                     }
                 }
 
